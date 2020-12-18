@@ -193,12 +193,13 @@ namespace StockWeight
 		{
 			foreach (KeyValuePair<string, List<StockInfoHelper>> kvp in customersInfo)
 			{
-				perWeightStock = perWeightCustomer / kvp.Value.Count;
+				perWeightStock = 1 / kvp.Value.Count;
 				foreach (StockInfoHelper si in kvp.Value)
-				{ 
-					
-				
-				
+				{
+
+					double profit = (Convert.ToDouble(GetStcokInfo(si.StockCode)[3]) - Convert.ToDouble(si.ClosingPrice)) / Convert.ToDouble(si.ClosingPrice);
+
+
 				}
 			
 			
