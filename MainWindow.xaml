@@ -1,0 +1,93 @@
+﻿<Window x:Class="StockWeight.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+		xmlns:prism="http://www.codeplex.com/prism"
+        xmlns:local="clr-namespace:StockWeight" 
+		xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+		xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions"
+		prism:ViewModelLocator.AutoWireViewModel="True"
+        mc:Ignorable="d" Width="860" Height="600" ResizeMode="NoResize"
+        Title="Stock Weight">
+	<Grid>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="200"/>
+			<ColumnDefinition Width="470"/>
+			<ColumnDefinition Width="170"/>
+		</Grid.ColumnDefinitions>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="50"/>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="50"/>
+		</Grid.RowDefinitions>
+		<ListView x:Name="Custom" Grid.Row="1" Margin="4" ItemsSource="{Binding Customers}" SelectedItem="{Binding CustomerSelected}">
+			<i:Interaction.Triggers>
+				<i:EventTrigger EventName="SelectionChanged" >
+					<ei:CallMethodAction MethodName="CustomChanged" TargetObject="{Binding}" />
+				</i:EventTrigger>
+			</i:Interaction.Triggers>
+			<ListView.View>
+				<GridView>
+					<GridView.ColumnHeaderContainerStyle>
+						<Style TargetType="{x:Type GridViewColumnHeader}">
+							<Setter Property="IsEnabled" Value="False"/>
+						</Style>
+					</GridView.ColumnHeaderContainerStyle>
+					<GridViewColumn Header="客户" Width="100" DisplayMemberBinding="{Binding Customer}" />
+					<GridViewColumn Header="个人指数"  DisplayMemberBinding="{Binding Exponent}" />
+				</GridView>
+			</ListView.View>
+		</ListView>
+		<ListView x:Name="Stocks" Grid.Row="1" Grid.Column="1" Margin="4" ItemsSource="{Binding Stocks}" SelectedItem="{Binding StockSelected}">
+			<i:Interaction.Triggers>
+				<i:EventTrigger EventName="SelectionChanged" >
+					<ei:CallMethodAction MethodName="StockChanged" TargetObject="{Binding}" />
+				</i:EventTrigger>
+			</i:Interaction.Triggers>
+			<ListView.View>
+				<GridView>
+					<GridView.ColumnHeaderContainerStyle>
+						<Style TargetType="{x:Type GridViewColumnHeader}">
+							<Setter Property="IsEnabled" Value="False"/>
+						</Style>
+					</GridView.ColumnHeaderContainerStyle>
+					<GridViewColumn Header="名称" Width="100" DisplayMemberBinding="{Binding StockName}" />
+					<GridViewColumn Header="代码" Width="100" DisplayMemberBinding="{Binding StockCode}" />
+					<GridViewColumn Header="收盘价" Width="100" DisplayMemberBinding="{Binding ClosingPrice}" />
+					<GridViewColumn Header="推荐日期" Width="150" DisplayMemberBinding="{Binding RecommendDay}" />
+				</GridView>
+			</ListView.View>
+		</ListView>
+		<Border BorderThickness="1" Grid.Row="1" Grid.Column="2" BorderBrush="Gray" Margin="4">
+			<StackPanel Orientation="Vertical"  Margin="4" >
+				<StackPanel Orientation="Horizontal" Margin="2 10 2 2">
+					<TextBlock Text="今日开盘价:  " FontSize="12"/>
+					<TextBlock Text="{Binding OpenToday}" HorizontalAlignment="Right"/>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal" Margin="2">
+					<TextBlock Text="昨日收盘价:  "/>
+					<TextBlock Text="{Binding Closing}" HorizontalAlignment="Right"/>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal" Margin="2">
+					<TextBlock Text="当前价格:      " />
+					<TextBlock Text="{Binding CurrentPrice}" HorizontalAlignment="Right"/>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal" Margin="2">
+					<TextBlock Text="今日最高价:  "/>
+					<TextBlock Text="{Binding HighPrice}" HorizontalAlignment="Right"/>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal" Margin="2">
+					<TextBlock Text="今日最低价:  "/>
+					<TextBlock Text="{Binding LowPrice}" HorizontalAlignment="Right"/>
+				</StackPanel>
+
+			</StackPanel>
+		</Border>
+		<StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="3" Margin="4">
+			<TextBlock Text="个人指数基数:  " VerticalAlignment="Center"/>
+			<TextBox Width="100" Height="26" Text="{Binding BaseExponent}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+			<Button Content="计算" Width="75" Height="26" VerticalAlignment="Center" Margin="10 0 0 0" Command="{Binding Calculate}"/>
+		</StackPanel>
+	</Grid>
+</Window>
