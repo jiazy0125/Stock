@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:prism="http://www.codeplex.com/prism"
-        xmlns:local="clr-namespace:StockWeight" 
 		xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
 		xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions"
 		prism:ViewModelLocator.AutoWireViewModel="True"
@@ -12,34 +11,56 @@
         Title="Stock Weight">
 	<Grid>
 		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="200"/>
-			<ColumnDefinition Width="470"/>
-			<ColumnDefinition Width="170"/>
+			<ColumnDefinition Width="250"/>
+			<ColumnDefinition Width="450"/>
+			<ColumnDefinition Width="*"/>
 		</Grid.ColumnDefinitions>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="50"/>
 			<RowDefinition Height="*"/>
 			<RowDefinition Height="50"/>
 		</Grid.RowDefinitions>
-		<ListView x:Name="Custom" Grid.Row="1" Margin="4" ItemsSource="{Binding Customers}" SelectedItem="{Binding CustomerSelected}">
+		<DataGrid Grid.Row="1" AutoGenerateColumns="False" ItemsSource="{Binding Customers}" Margin="4"
+                  CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False"
+                  CanUserResizeColumns="False" CanUserResizeRows="False" CanUserSortColumns="False" 
+				  SelectedItem="{Binding CustomerSelected}">
 			<i:Interaction.Triggers>
 				<i:EventTrigger EventName="SelectionChanged" >
 					<ei:CallMethodAction MethodName="CustomChanged" TargetObject="{Binding}" />
 				</i:EventTrigger>
 			</i:Interaction.Triggers>
-			<ListView.View>
-				<GridView>
-					<GridView.ColumnHeaderContainerStyle>
-						<Style TargetType="{x:Type GridViewColumnHeader}">
-							<Setter Property="IsEnabled" Value="False"/>
-						</Style>
-					</GridView.ColumnHeaderContainerStyle>
-					<GridViewColumn Header="客户" Width="100" DisplayMemberBinding="{Binding Customer}" />
-					<GridViewColumn Header="个人指数"  DisplayMemberBinding="{Binding Exponent}" />
-				</GridView>
-			</ListView.View>
-		</ListView>
-		<ListView x:Name="Stocks" Grid.Row="1" Grid.Column="1" Margin="4" ItemsSource="{Binding Stocks}" SelectedItem="{Binding StockSelected}">
+			<DataGrid.Columns>
+				<DataGridTextColumn Header="客户" Width="*" Binding="{Binding Customer}"/>
+				<DataGridTemplateColumn Header="基数" Width="60" >
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<Grid>
+								<TextBox Width="60" Text="{Binding Exbase, Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" BorderThickness="0"/>
+							</Grid>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTextColumn Header="个人指数" Width="*" Binding="{Binding Exponent}"/>
+			</DataGrid.Columns>
+		</DataGrid>
+
+		<DataGrid Grid.Row="1" Grid.Column="1" AutoGenerateColumns="False" ItemsSource="{Binding Stocks}" Margin="4"
+                  CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False"
+                  CanUserResizeColumns="False" CanUserResizeRows="False" CanUserSortColumns="False" 
+				  SelectedItem="{Binding StockSelected}">
+			<i:Interaction.Triggers>
+				<i:EventTrigger EventName="SelectionChanged" >
+					<ei:CallMethodAction MethodName="StockChanged" TargetObject="{Binding}" />
+				</i:EventTrigger>
+			</i:Interaction.Triggers>
+			<DataGrid.Columns>
+				<DataGridTextColumn Header="名称" Width="*" Binding="{Binding StockName}"/>
+				<DataGridTextColumn Header="代码" Width="*"  Binding="{Binding StockCode}"/>
+				<DataGridTextColumn Header="收盘价" Width="*" Binding="{Binding ClosingPrice}"/>
+				<DataGridTextColumn Header="推荐日期" Width="1.5*" Binding="{Binding RecommendDay}"/>
+			</DataGrid.Columns>
+		</DataGrid>
+		<!--<ListView x:Name="Stocks" Grid.Row="1" Grid.Column="1" Margin="4" ItemsSource="{Binding Stocks}" SelectedItem="{Binding StockSelected}">
 			<i:Interaction.Triggers>
 				<i:EventTrigger EventName="SelectionChanged" >
 					<ei:CallMethodAction MethodName="StockChanged" TargetObject="{Binding}" />
@@ -58,7 +79,7 @@
 					<GridViewColumn Header="推荐日期" Width="150" DisplayMemberBinding="{Binding RecommendDay}" />
 				</GridView>
 			</ListView.View>
-		</ListView>
+		</ListView>-->
 		<Border BorderThickness="1" Grid.Row="1" Grid.Column="2" BorderBrush="Gray" Margin="4">
 			<StackPanel Orientation="Vertical"  Margin="4" >
 				<StackPanel Orientation="Horizontal" Margin="2 10 2 2">
@@ -85,9 +106,9 @@
 			</StackPanel>
 		</Border>
 		<StackPanel Orientation="Horizontal" Grid.Row="2" Grid.ColumnSpan="3" Margin="4">
-			<TextBlock Text="个人指数基数:  " VerticalAlignment="Center"/>
-			<TextBox Width="100" Height="26" Text="{Binding BaseExponent}" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+			<Button Content="刷新" Width="75" Height="26" VerticalAlignment="Center" Margin="10 0 0 0" Command="{Binding Refresh}"/>
 			<Button Content="计算" Width="75" Height="26" VerticalAlignment="Center" Margin="10 0 0 0" Command="{Binding Calculate}"/>
+			<Button Content="保存" Width="75" Height="26" VerticalAlignment="Center" Margin="10 0 0 0" Command="{Binding Save}"/>
 		</StackPanel>
 	</Grid>
 </Window>

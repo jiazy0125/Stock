@@ -19,18 +19,19 @@ namespace StockWeight
 {
 	class MainWindowViewModel : BindableBase
 	{
-		private double perWeightCustomer = 0;
-		private double perWeightStock = 0;
+		private float perWeightCustomer = 0;
+		private float perWeightStock = 0;
 		public ObservableCollection<CustomerHelper> Customers { get; } = new ObservableCollection<CustomerHelper>();
 
 		public ObservableCollection<StockInfoHelper> Stocks { get; private set; } = new ObservableCollection<StockInfoHelper>();
 
-		private Dictionary<string, List<StockInfoHelper>> customersInfo = new Dictionary<string, List<StockInfoHelper>>();
+		private readonly Dictionary<string, List<StockInfoHelper>> customersInfo = new Dictionary<string, List<StockInfoHelper>>();
 
 		private string root = AppDomain.CurrentDomain.BaseDirectory;
 
 		public DelegateCommand Calculate { get; private set; }
-
+		public DelegateCommand Refresh { get; private set; }
+		public DelegateCommand Save { get; private set; }
 		#region propertis
 		private CustomerHelper customerSelected;
 		public CustomerHelper CustomerSelected
@@ -106,6 +107,8 @@ namespace StockWeight
 
 		private void LoadAllInfo()
 		{
+			Customers.Clear();
+			customersInfo.Clear();
 			string infoFolder = Path.Combine(root, "CustomerInfo");
 
 			try
@@ -118,8 +121,18 @@ namespace StockWeight
 				var files = Directory.GetFiles(infoFolder, "*.txt");
 				foreach (var file in files)
 				{
-					string fileName = Path.GetFileNameWithoutExtension(file);
-					CustomerHelper ch = new CustomerHelper() { Customer = fileName };
+					string fileName = Path.GetFileNameWithoutExtension(file);					
+					int index = fileName.IndexOf("_");
+					string tempName;
+					float tempBase = 0;
+					if (index > 0)
+					{
+						tempName = fileName.Substring(0, index);
+						tempBase = float.Parse(fileName.Substring(index + 1));
+					}
+					else tempName = fileName;
+
+					CustomerHelper ch = new CustomerHelper() { Customer = tempName, Exbase= tempBase, FilePath=file };
 					Customers.Add(ch);
 					var content = ReadTxt(file);
 					List<StockInfoHelper> lt = new List<StockInfoHelper>();
@@ -130,13 +143,13 @@ namespace StockWeight
 						{
 							StockName = stockInfo[0],
 							StockCode = stockInfo[1],
-							ClosingPrice = Convert.ToDouble(stockInfo[2]),
+							ClosingPrice = float.Parse(stockInfo[2]),
 							RecommendDay = stockInfo[3]
 						};
 						lt.Add(si);
 					}
 
-					customersInfo.Add(fileName, lt);
+					customersInfo.Add(tempName, lt);
 				}
 				perWeightCustomer = 1 / Customers.Count();
 			}
@@ -193,18 +206,21 @@ namespace StockWeight
 		{
 			foreach (KeyValuePair<string, List<StockInfoHelper>> kvp in customersInfo)
 			{
-				perWeightStock = 1 / kvp.Value.Count;
+				perWeightStock = (float)1 / (float)kvp.Value.Count;
+				float total = 1;
 				foreach (StockInfoHelper si in kvp.Value)
 				{
 
-					double profit = (Convert.ToDouble(GetStcokInfo(si.StockCode)[3]) - Convert.ToDouble(si.ClosingPrice)) / Convert.ToDouble(si.ClosingPrice);
+					float profit = (float.Parse(GetStcokInfo(si.StockCode)[3]) - si.ClosingPrice) / si.ClosingPrice;
 
+					total += perWeightStock * profit;
 
 				}
-			
-			
-			
-			
+
+				var ct = Customers.First(t => t.Customer == kvp.Key);
+				ct.Exponent = ct.Exbase * total;
+
+
 			}
 		
 		}
@@ -214,6 +230,21 @@ namespace StockWeight
 		public MainWindowViewModel(IRegionManager regionManager, IEventAggregator ea, IContainerExtension container, IModuleCatalog mc)
 		{
 			LoadAllInfo();
+			Calculate = new DelegateCommand(() => { CalculateExponent(); });
+			Refresh = new DelegateCommand(() => { LoadAllInfo(); });
+			Save = new DelegateCommand(() => {
+				foreach (CustomerHelper ct in Customers)
+				{
+					
+					string newFile = Path.Combine(Path.GetDirectoryName(ct.FilePath), $"{ct.Customer}_{ct.Exbase}.txt");
+					if (File.Exists(ct.FilePath))
+					{
+						File.Move(ct.FilePath, newFile);
+					}
+				}
+			
+			
+			});
 
 		}
 	}
@@ -223,7 +254,7 @@ namespace StockWeight
 
 		private string stockName;
 		private string stockCode;
-		private double closingPrice;
+		private float closingPrice = 0;
 		private string recommendDay;
 
 		public string StockName
@@ -236,7 +267,7 @@ namespace StockWeight
 			get => stockCode;
 			set => SetProperty(ref stockCode, value);
 		}
-		public double ClosingPrice
+		public float ClosingPrice
 		{
 			get => closingPrice;
 			set => SetProperty(ref closingPrice, value);
@@ -253,7 +284,8 @@ namespace StockWeight
 	{
 
 		private string customer;
-		private double exponent;
+		private float exponent = 0;
+		private float exbase = 0;
 
 
 		public string Customer
@@ -261,12 +293,22 @@ namespace StockWeight
 			get => customer;
 			set => SetProperty(ref customer, value);
 		}
-		public double Exponent
+		public float Exponent
 		{
 			get => exponent;
 			set => SetProperty(ref exponent, value);
 		}
 
-
+		public float Exbase
+		{
+			get => exbase;
+			set => SetProperty(ref exbase, value);
+		}
+		private string filePath;
+		public string FilePath
+		{
+			get => filePath;
+			set => SetProperty(ref filePath, value);
+		}
 	}
 }
