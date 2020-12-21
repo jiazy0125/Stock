@@ -25,7 +25,6 @@ C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\bin\Release\System.Threading.Tasks.
 C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\bin\Release\System.Windows.Interactivity.xml
 C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\bin\Release\Unity.Abstractions.pdb
 C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\bin\Release\Unity.Container.pdb
-C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\obj\Release\StockWeight.csprojAssemblyReference.cache
 C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\obj\Release\MainWindow.baml
 C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\obj\Release\MainWindow.g.cs
 C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\obj\Release\App.g.cs

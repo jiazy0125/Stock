@@ -89,6 +89,7 @@ namespace StockWeight
 		public void CustomChanged(object sender, EventArgs e)
 		{
 			Stocks.Clear();
+			if (CustomerSelected == null) return;
 			Stocks.AddRange(customersInfo[customerSelected.Customer]);
 			perWeightStock = perWeightCustomer / Stocks.Count;
 		}
