@@ -1,0 +1,2 @@
+customer1 1200 0.25
+customer2 1300 0.25

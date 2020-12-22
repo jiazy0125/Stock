@@ -36,3 +36,4 @@ C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\obj\Release\StockWeight.csproj.Core
 C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\obj\Release\StockWeight.csproj.CopyComplete
 C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\obj\Release\StockWeight.exe
 C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\obj\Release\StockWeight.pdb
+C:\Users\zhanyj\Source\Repos\jiazy0125\Stock\obj\Release\StockWeight.csprojAssemblyReference.cache

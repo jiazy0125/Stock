@@ -19,8 +19,6 @@ namespace StockWeight
 {
 	class MainWindowViewModel : BindableBase
 	{
-		private float perWeightCustomer = 0;
-		private float perWeightStock = 0;
 		public ObservableCollection<CustomerHelper> Customers { get; } = new ObservableCollection<CustomerHelper>();
 
 		public ObservableCollection<StockInfoHelper> Stocks { get; private set; } = new ObservableCollection<StockInfoHelper>();
@@ -32,6 +30,10 @@ namespace StockWeight
 		public DelegateCommand Calculate { get; private set; }
 		public DelegateCommand Refresh { get; private set; }
 		public DelegateCommand Save { get; private set; }
+		public DelegateCommand CustomerAdd { get; private set; }
+		public DelegateCommand CustomerDel { get; private set; }
+		public DelegateCommand StockAdd { get; private set; }
+		public DelegateCommand StockDel { get; private set; }
 		#region propertis
 		private CustomerHelper customerSelected;
 		public CustomerHelper CustomerSelected
@@ -78,20 +80,32 @@ namespace StockWeight
 			set => SetProperty(ref lowToday, value);
 		}
 
-		private double baseExponent = 1000;
-		public double BaseExponent
+		private float totalBase = 1000;
+		public float TotalBase
 		{
-			get => baseExponent;
-			set => SetProperty(ref baseExponent, value);
+			get => totalBase;
+			set => SetProperty(ref totalBase, value);
 		}
 
+		private float totalExponet = 0;
+		public float TotalExponent
+		{
+			get => totalExponet;
+			set => SetProperty(ref totalExponet, value);
+		}
+
+		private string newCustomer="";
+		public string NewCustomer
+		{
+			get => newCustomer;
+			set => SetProperty(ref newCustomer, value);
+		}
 		#endregion
 		public void CustomChanged(object sender, EventArgs e)
 		{
 			Stocks.Clear();
 			if (CustomerSelected == null) return;
 			Stocks.AddRange(customersInfo[customerSelected.Customer]);
-			perWeightStock = perWeightCustomer / Stocks.Count;
 		}
 		public void StockChanged(object sender, EventArgs e)
 		{
@@ -106,6 +120,7 @@ namespace StockWeight
 			}
 		}
 
+
 		private void LoadAllInfo()
 		{
 			Customers.Clear();
@@ -118,24 +133,13 @@ namespace StockWeight
 				{
 					Directory.CreateDirectory(infoFolder);
 				}
-
-				var files = Directory.GetFiles(infoFolder, "*.txt");
-				foreach (var file in files)
-				{
-					string fileName = Path.GetFileNameWithoutExtension(file);					
-					int index = fileName.IndexOf("_");
-					string tempName;
-					float tempBase = 0;
-					if (index > 0)
-					{
-						tempName = fileName.Substring(0, index);
-						tempBase = float.Parse(fileName.Substring(index + 1));
-					}
-					else tempName = fileName;
-
-					CustomerHelper ch = new CustomerHelper() { Customer = tempName, Exbase= tempBase, FilePath=file };
+				var data = ReadTxt(Path.Combine(root, "CustomerInfo\\Customers.txt"));
+				foreach (string str in data)
+				{ 
+					var info=  Regex.Split(str, " ", RegexOptions.IgnoreCase);
+					CustomerHelper ch = new CustomerHelper() { Customer = info[0], Exbase = float.Parse(info[1]), Weight = float.Parse(info[2]) };
 					Customers.Add(ch);
-					var content = ReadTxt(file);
+					var content = ReadTxt(Path.Combine(root, $"CustomerInfo\\{info[0]}.txt"));
 					List<StockInfoHelper> lt = new List<StockInfoHelper>();
 					foreach (string txt in content)
 					{
@@ -150,11 +154,10 @@ namespace StockWeight
 						lt.Add(si);
 					}
 
-					customersInfo.Add(tempName, lt);
+					customersInfo.Add(info[0], lt);
 				}
-				perWeightCustomer = 1 / Customers.Count();
 			}
-			catch { perWeightCustomer = 0; }
+			catch { }
 		}
 
 		public List<string> ReadTxt(string path)
@@ -173,6 +176,22 @@ namespace StockWeight
 			}
 
 			return txt;
+		}
+
+		public void WriteTxt(string path, string content)
+		{
+			FileStream fs;
+			if (!File.Exists(path))
+				fs = new FileStream(path, FileMode.Create);
+			else fs = new FileStream(path, FileMode.Truncate);
+			StreamWriter sw = new StreamWriter(fs);
+			//开始写入
+			sw.Write(content);
+			//清空缓冲区
+			sw.Flush();
+			//关闭流
+			sw.Close();
+			fs.Close();
 		}
 
 		private string[] GetStcokInfo(string stockCode)
@@ -207,7 +226,8 @@ namespace StockWeight
 		{
 			foreach (KeyValuePair<string, List<StockInfoHelper>> kvp in customersInfo)
 			{
-				perWeightStock = (float)1 / (float)kvp.Value.Count;
+				float perWeightStock = 1;
+				if (kvp.Value.Count > 0) perWeightStock = (float)1 / (float)kvp.Value.Count;
 				float total = 1;
 				foreach (StockInfoHelper si in kvp.Value)
 				{
@@ -219,33 +239,128 @@ namespace StockWeight
 				}
 
 				var ct = Customers.First(t => t.Customer == kvp.Key);
+				ct.Profit = total;
 				ct.Exponent = ct.Exbase * total;
 
 
 			}
+			float totalPer = 0;
+			foreach (CustomerHelper ct in Customers)
+			{
+				totalPer += ct.Profit * ct.Weight;
+			}
+			TotalExponent = totalBase * totalPer;
 		
 		}
 
+		private void SaveCustomers()
+		{
+			string content = "";
+			foreach (CustomerHelper ct in Customers)
+			{
+				content += $"{ct.Customer} {ct.Exbase} {ct.Weight}\n";
+			}
 
+			WriteTxt(Path.Combine(root, "CustomerInfo\\Customers.txt"), content.Trim());
+		}
 
-		public MainWindowViewModel(IRegionManager regionManager, IEventAggregator ea, IContainerExtension container, IModuleCatalog mc)
+		private void SaveStocks()
+		{
+			foreach (KeyValuePair<string, List<StockInfoHelper>> kvp in customersInfo)
+			{
+				string contentStock = "";
+				foreach (StockInfoHelper si in kvp.Value)
+				{
+					contentStock += $"{si.StockName} {si.StockCode} {si.ClosingPrice} {si.RecommendDay}\n";
+				}
+				WriteTxt(Path.Combine(root, $"CustomerInfo\\{kvp.Key}.txt"), contentStock);
+			}
+		}
+
+		public MainWindowViewModel()
 		{
 			LoadAllInfo();
 			Calculate = new DelegateCommand(() => { CalculateExponent(); });
 			Refresh = new DelegateCommand(() => { LoadAllInfo(); });
-			Save = new DelegateCommand(() => {
-				foreach (CustomerHelper ct in Customers)
-				{
-					
-					string newFile = Path.Combine(Path.GetDirectoryName(ct.FilePath), $"{ct.Customer}_{ct.Exbase}.txt");
-					if (File.Exists(ct.FilePath))
-					{
-						File.Move(ct.FilePath, newFile);
-					}
-				}
-			
+			Save = new DelegateCommand(() =>
+			{
+				SaveCustomers();
+				SaveStocks();
 			
 			});
+
+			CustomerAdd = new DelegateCommand(() =>
+			{
+				if (newCustomer.Length <= 0)
+				{
+					MessageBox.Show("客户名称不得为空");
+					return;
+				}
+				CustomerHelper ch = new CustomerHelper() { Customer = newCustomer, Exbase = 1000, Weight = 0 };
+				Customers.Add(ch);
+				customersInfo.Add(newCustomer, new List<StockInfoHelper>());
+			
+			});
+
+			CustomerDel = new DelegateCommand(() => 
+			{
+				if (customerSelected == null)
+				{
+					MessageBox.Show("请先选择需要删除的用户");
+					return;
+				}
+
+				MessageBoxResult dr = MessageBox.Show("该操作将删除永久删除用户所有信息","提示", MessageBoxButton.OKCancel, MessageBoxImage.Question);
+				if (!(dr == MessageBoxResult.OK)) return;
+				try
+				{
+					CustomerHelper ch = Customers.First(t => t == CustomerSelected);
+					Customers.Remove(ch);
+					customersInfo.Remove(ch.Customer);
+
+					File.Delete(Path.Combine(root, $"CustomerInfo\\{ch.Customer}.txt"));
+					SaveCustomers();
+				}
+				catch { }
+			});
+
+			StockAdd = new DelegateCommand(() => 
+			{
+				if (customerSelected == null)
+				{
+					MessageBox.Show("请先选中一个客户");
+					return;
+				}
+				try
+				{
+					string st= $"S{DateTime.Now:ffffff}";
+					StockInfoHelper si = new StockInfoHelper() { StockName = st, StockCode = "sh600000", ClosingPrice = 0, RecommendDay = "1901-01-01" };
+					Stocks.Add(si);
+					customersInfo[customerSelected.Customer].Add(si);
+				}
+				catch { }
+			});
+
+			StockDel = new DelegateCommand(() => 
+			{
+
+				if (stockSelected == null)
+				{
+					MessageBox.Show("请先选中一支股票");
+					return;
+				}
+				MessageBoxResult dr = MessageBox.Show("该操作将删除永久删除股票信息", "提示", MessageBoxButton.OKCancel, MessageBoxImage.Question);
+				if (!(dr == MessageBoxResult.OK)) return;
+				try
+				{
+					customersInfo[customerSelected.Customer].Remove(stockSelected);
+					Stocks.Remove(stockSelected);
+					SaveStocks();
+				}
+				catch { }
+			
+			});
+
 
 		}
 	}
@@ -287,6 +402,7 @@ namespace StockWeight
 		private string customer;
 		private float exponent = 0;
 		private float exbase = 0;
+		private float weight = 0;
 
 
 		public string Customer
@@ -305,11 +421,15 @@ namespace StockWeight
 			get => exbase;
 			set => SetProperty(ref exbase, value);
 		}
-		private string filePath;
-		public string FilePath
+
+		public float Weight
 		{
-			get => filePath;
-			set => SetProperty(ref filePath, value);
+			get => weight;
+			set => SetProperty(ref weight, value);
 		}
+
+		public float Profit { get; set; }
+
+
 	}
 }
